@@ -1,18 +1,38 @@
-# A gradle plugin for Rocker.
+package de.mnl.gradle.rocker.test;
+import org.gradle.testkit.runner.GradleRunner
+import static org.gradle.testkit.runner.TaskOutcome.*
 
-This gradle plugin that creates `generateRockerTemplateSource` tasks that are 
-run before `compileJava`. 
+import javax.swing.plaf.metal.MetalIconFactory.FolderIcon16
 
-The plugin is a fork from the rocker-gradle-plugin subproject in
-[Victor/rocker](https://github.com/Victory/rocker). Development there
-was simply too slow. The intension is to keep this project in sync and
-eventually deprecate it.
+import org.gradle.internal.impldep.org.apache.commons.io.FileExistsException
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import spock.lang.Specification
 
-## Example gradle script using this plugin:
+class PluginTest extends Specification {
+	@Rule final TemporaryFolder testProjectDir = new TemporaryFolder()
+	File buildFile
 
-```groovy
-apply plugin: 'java'
-apply plugin: 'rocker-gradle-plugin'// actually implies java plugin
+	def setup() {
+		def target = testProjectDir.newFolder("src","test","templates")
+		new AntBuilder().copy(todir: target) {
+			fileset(dir: "src/test/templates")
+		}
+		buildFile = testProjectDir.newFile('build.gradle')
+	}
+
+	def "Basic Test"() {
+		given:
+		buildFile << """
+buildscript {
+    repositories {
+        jcenter() // Needed for plugin's dependencies
+    }
+}
+
+plugins {
+		id 'rocker-gradle-plugin'
+}
 
 sourceCompatibility = 1.8
 
@@ -20,7 +40,7 @@ sourceSets {
     main {
         rocker {
             // Directory that has your Template.rocker.html files
-            srcDir('rocker-templates')
+            srcDir('src/test/templates')
         }
     }
 }
@@ -65,19 +85,6 @@ repositories {
     mavenCentral()
 }
 
-buildscript {
-    repositories {
-        mavenLocal() // Provided you have published the plugin there
-        jcenter() // Needed for plugin's dependencies
-    }
-
-    dependencies {
-        classpath group: 'de.mnl.gradle',
-                name: 'rocker-gradle-plugin',
-                version: '1.0-SNAPSHOT'
-    }
-}
-
 dependencies {
     compile group: 'com.fizzed',
             name: 'rocker-compiler',
@@ -93,10 +100,23 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
-```
+"""
 
-## Building the standalone plugin
-This build has been tested in Eclipse and in Intellij Community addition.
+		when:
+		def result = GradleRunner.create()
+			.withGradleVersion("3.5")
+			.withPluginClasspath()
+			.withProjectDir(testProjectDir.root)
+			.withArguments(":generateRockerTemplateSource", "--debug")
+			.build()
 
-By running `./gradlew publishToMavenLocal` you can make the plugin available
-locally.
+		then:
+		println result.output
+		result.task(':generateRockerTemplateSource').outcome == SUCCESS
+		isFile("build/generated-src/rocker/main/org/acme/foo/templates/HelloTemplate.java")
+	}
+	
+	def boolean isFile(relativePath) {
+		new File(testProjectDir.root, relativePath).file
+	}
+}

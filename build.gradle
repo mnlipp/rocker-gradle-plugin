@@ -1,0 +1,44 @@
+plugins {
+    id "java-gradle-plugin"
+    id "maven-publish"
+	id "groovy"
+}
+
+group 'de.mnl.gradle'
+archivesBaseName = 'rocker-gradle-plugin'
+version = '1.0.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'com.fizzed',
+            name: 'rocker-compiler',
+            version: '+'
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+        exclude module: 'groovy-all'
+	}
+}
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = "rocker-gradle-plugin"
+            implementationClass = "de.mnl.gradle.rocker.RockerPlugin"
+        }
+    }
+}
+
+publishing {
+    // Required information added by java-gradle-plugin.
+    // Optionally add url for local repository if you
+    // don't want to use the default.
+    // e.g.
+    //
+}
+
