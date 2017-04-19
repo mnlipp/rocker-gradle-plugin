@@ -1,9 +1,9 @@
 # A gradle plugin for Rocker.
 
-This gradle plugin that creates `generateRockerTemplateSource` tasks that are 
+This gradle plugin creates `generateRockerTemplateSource` tasks that are 
 run before `compileJava`. 
 
-The plugin is a fork from the rocker-gradle-plugin subproject in
+The plugin is a fork of the rocker-gradle-plugin subproject in
 [Victor/rocker](https://github.com/Victory/rocker). Development there
 was simply too slow. The intension is to keep this project in sync and
 eventually deprecate it.
